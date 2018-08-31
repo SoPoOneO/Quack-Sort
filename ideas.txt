@@ -1,0 +1,7 @@
+- duck looks at you and lays egg in hand/wing and throws it at screen if you got a really bad score
+- ducks are in proportional sizes and wear their numbers on sights on their necks
+- hints, where a duck subtly signals with wink or holding hand up
+- active duck comes forward and shows bigger
+- arrows show in bounces to each target, possibly along top and bottom for directions
+- maybe instead of wrapping, numbers that go around the edge bounce
+- for object continuity, moves are actually depicted by each object smoothly travelling to new location
