@@ -33,13 +33,10 @@
         {{ duck }}
       </div>
     </div>
-    <div id="moves">
-        <h1>Moves: {{ moves }}</h1>
-        <button type="button" @click="handleResetClick()">Reset</button>
-    </div>
-    <div id="result">
-        <h1 v-if="in_win_state">You Win!</h1>
-    </div>
+    <h1>Moves: {{ moves }}</h1>
+    Size: <input type="number" min="2" id="size" v-model.number="size">
+    <button type="button" @click="reset()">Reset</button>
+    <h1 v-if="in_win_state">You Win!</h1>
 </div>
 <script>
 
@@ -48,11 +45,15 @@ Number.prototype.mod = function(n) {
 };
 
 var v = new Vue({
+  created: function(){
+    this.reset();
+  },
   el: '#app',
   data: {
-    ducks: [0,0,0,1,0,0,0],
+    ducks: [],
     source_index: null,
-    moves: 0
+    moves: 0,
+    size: 7
   },
   computed: {
     left_target_index: function(){
@@ -99,9 +100,14 @@ var v = new Vue({
             this.source_index = clicked_index;
         }
     },
-    handleResetClick: function(){
-        this.ducks = [6,5,4,3,2,1,0];
+    reset: function(){
+        var ducks = [];
+        for(i=this.size; i>=1; i--){
+            ducks.push(i);
+        }
+        this.ducks = ducks;
         this.moves = 0;
+        this.source_index = null;
     },
     getDuckClass: function(clicked_index) {
         if(this.source_index == clicked_index){
