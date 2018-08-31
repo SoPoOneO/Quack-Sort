@@ -27,24 +27,32 @@
 
 </head>
 <body>
-<div id="row">
-  <div class="duck" :class="getDuckClass(index)" v-for="(duck, index) in ducks" @click="handleDuckClick(duck, index)">
-    {{ duck }}
-  </div>
+<div id="app">
+    <div id="row">
+      <div class="duck" :class="getDuckClass(index)" v-for="(duck, index) in ducks" @click="handleDuckClick(duck, index)">
+        {{ duck }}
+      </div>
+    </div>
+    <div id="moves">
+        <h1>Moves: {{ moves }}</h1>
+        <button type="button" @click="handleResetClick()">Reset</button>
+    </div>
+    <div id="result">
+        <h1 v-if="in_win_state">You Win!</h1>
+    </div>
 </div>
-
 <script>
 
 Number.prototype.mod = function(n) {
     return ((this%n)+n)%n;
 };
 
-var ducks = [6,5,4,3,2,1,0];
 var v = new Vue({
-  el: '#row',
+  el: '#app',
   data: {
-    ducks: ducks,
-    source_index: null
+    ducks: [0,0,0,1,0,0,0],
+    source_index: null,
+    moves: 0
   },
   computed: {
     left_target_index: function(){
@@ -56,6 +64,14 @@ var v = new Vue({
         return this.source_index === null ?
                null :
                (this.source_index+this.ducks[this.source_index]).mod(this.ducks.length);
+    },
+    in_win_state: function(){
+        for(i in this.ducks){
+            if(i > 0 && this.ducks[i] < this.ducks[i-1]){
+                return false;
+            }
+        }
+        return true;
     }
   },
   methods: {
@@ -65,6 +81,8 @@ var v = new Vue({
                this.ducks[index];
     },
     handleDuckClick: function(duck, clicked_index) {
+        // if we've aready won... just ignore
+        if(this.in_win_state){return;}
         // if we're re-clicking the source... clear it
         if(this.source_index == clicked_index){
             this.source_index = null;
@@ -75,10 +93,15 @@ var v = new Vue({
             Vue.set(v.ducks, this.source_index, target_value);
             Vue.set(v.ducks, clicked_index, source_value);
             this.source_index = null;
+            this.moves++;
         // otherwise... just set a new source
         }else{
             this.source_index = clicked_index;
         }
+    },
+    handleResetClick: function(){
+        this.ducks = [6,5,4,3,2,1,0];
+        this.moves = 0;
     },
     getDuckClass: function(clicked_index) {
         if(this.source_index == clicked_index){
