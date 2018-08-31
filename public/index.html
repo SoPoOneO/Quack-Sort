@@ -1,0 +1,91 @@
+<html>
+<head>
+<style>
+.duck {
+    width: 100px;
+    height: 100px;
+    border: 1px solid black;
+    display: inline-block;
+    text-align: center;
+    padding-top: 35px;
+    box-sizing: border-box;
+    font-size: 2em;
+    margin: 8px;
+    cursor: pointer;
+}
+
+.source_duck {
+    background-color: red;
+}
+
+.target_duck {
+    background-color: orange;
+}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/vue@2.5.16/dist/vue.js"></script>
+
+
+</head>
+<body>
+<div id="row">
+  <div class="duck" :class="getDuckClass(index)" v-for="(duck, index) in ducks" @click="handleDuckClick(duck, index)">
+    {{ duck }}
+  </div>
+</div>
+
+<script>
+
+var ducks = [6,5,4,3,2,1,0];
+var v = new Vue({
+  el: '#row',
+  data: {
+    ducks: ducks,
+    source_duck: null
+  },
+  computed: {
+    left_target_duck: function(){
+        return this.source_duck === null ?
+               null :
+               this.source_duck-this.getSourceDuckNumber();
+    },
+    right_target_duck: function(){
+        return this.source_duck === null ?
+               null :
+               this.source_duck+this.getSourceDuckNumber();
+        }
+  },
+  methods: {
+    getSourceDuckNumber: function() {
+        return this.ducks[this.source_duck];
+    },
+    handleDuckClick: function(duck, index) {
+        // if we're re-clicking the source... clear it
+        if(this.source_duck == index){
+            this.source_duck = null;
+        // else if we're clicking a target... act on that
+        }else if(this.right_target_duck == index || this.left_target_duck == index){
+            var source_duck_value = this.ducks[this.source_duck];
+            var target_duck_value = duck;
+            Vue.set(v.ducks, this.source_duck, target_duck_value);
+            Vue.set(v.ducks, index, source_duck_value);
+            this.source_duck = null;
+        // otherwise... just set a new source
+        }else{
+            this.source_duck = index;
+        }
+    },
+    getDuckClass: function(index) {
+        if(this.source_duck == index){
+            return "source_duck";
+        }else if(this.left_target_duck == index){
+            return "target_duck";
+        }else if(this.right_target_duck == index){
+            return "target_duck";
+        }
+    }
+  }
+})
+
+</script>
+    
+</body>
