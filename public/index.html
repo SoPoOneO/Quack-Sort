@@ -14,7 +14,7 @@
     cursor: pointer;
 }
 
-.source_duck {
+.source_index {
     background-color: red;
 }
 
@@ -35,51 +35,57 @@
 
 <script>
 
+Number.prototype.mod = function(n) {
+    return ((this%n)+n)%n;
+};
+
 var ducks = [6,5,4,3,2,1,0];
 var v = new Vue({
   el: '#row',
   data: {
     ducks: ducks,
-    source_duck: null
+    source_index: null
   },
   computed: {
-    left_target_duck: function(){
-        return this.source_duck === null ?
+    left_target_index: function(){
+        return this.source_index === null ?
                null :
-               this.source_duck-this.getSourceDuckNumber();
+               (this.source_index-this.ducks[this.source_index]).mod(this.ducks.length);
     },
-    right_target_duck: function(){
-        return this.source_duck === null ?
+    right_target_index: function(){
+        return this.source_index === null ?
                null :
-               this.source_duck+this.getSourceDuckNumber();
-        }
+               (this.source_index+this.ducks[this.source_index]).mod(this.ducks.length);
+    }
   },
   methods: {
-    getSourceDuckNumber: function() {
-        return this.ducks[this.source_duck];
+    getDuckValue: function(index){
+        return index === null ?
+               null :
+               this.ducks[index];
     },
-    handleDuckClick: function(duck, index) {
+    handleDuckClick: function(duck, clicked_index) {
         // if we're re-clicking the source... clear it
-        if(this.source_duck == index){
-            this.source_duck = null;
+        if(this.source_index == clicked_index){
+            this.source_index = null;
         // else if we're clicking a target... act on that
-        }else if(this.right_target_duck == index || this.left_target_duck == index){
-            var source_duck_value = this.ducks[this.source_duck];
-            var target_duck_value = duck;
-            Vue.set(v.ducks, this.source_duck, target_duck_value);
-            Vue.set(v.ducks, index, source_duck_value);
-            this.source_duck = null;
+        }else if(this.right_target_index == clicked_index || this.left_target_index == clicked_index){
+            var source_value = this.getDuckValue(this.source_index);
+            var target_value = this.getDuckValue(clicked_index);
+            Vue.set(v.ducks, this.source_index, target_value);
+            Vue.set(v.ducks, clicked_index, source_value);
+            this.source_index = null;
         // otherwise... just set a new source
         }else{
-            this.source_duck = index;
+            this.source_index = clicked_index;
         }
     },
-    getDuckClass: function(index) {
-        if(this.source_duck == index){
-            return "source_duck";
-        }else if(this.left_target_duck == index){
+    getDuckClass: function(clicked_index) {
+        if(this.source_index == clicked_index){
+            return "source_index";
+        }else if(this.left_target_index == clicked_index){
             return "target_duck";
-        }else if(this.right_target_duck == index){
+        }else if(this.right_target_index == clicked_index){
             return "target_duck";
         }
     }
