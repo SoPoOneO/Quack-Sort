@@ -7,11 +7,16 @@
     border: 1px solid black;
     display: inline-block;
     text-align: center;
-    padding-top: 35px;
+    padding-top: 15px;
     box-sizing: border-box;
-    font-size: 2em;
+    font-size: 1.5em;
     margin: 8px;
     cursor: pointer;
+}
+
+.duck img {
+    width: 50px;
+    height: 50px;
 }
 
 .source_index {
@@ -21,6 +26,23 @@
 .target_duck {
     background-color: orange;
 }
+
+#boards {
+    margin-bottom: 40px;
+}
+
+.board {
+    border: 1px solid grey;
+    width: 45px;
+    height: 45px;
+    margin: 8px;
+    display: inline-block;
+    text-align: center;
+}
+
+.current_board {
+    background-color: #CCC;
+}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/vue@2.5.16/dist/vue.js"></script>
 
@@ -28,9 +50,22 @@
 </head>
 <body>
 <div id="app">
-    <div id="row">
-      <div class="duck" :class="getDuckClass(index)" v-for="(duck, index) in ducks" @click="handleDuckClick(duck, index)">
-        {{ duck }}
+    <div id="boards">
+      <div class="board"
+           v-bind:class="{ current_board: index==current_board }"
+           v-for="(board, index) in boards" 
+           @click="handleBoardClick(board, index)">
+            Level <br>
+            {{ (index+1) }}
+      </div>
+    </div>
+    <div id="ducks">
+      <div class="duck" 
+           :class="getDuckClass(index)" 
+           v-for="(duck, index) in ducks" 
+           @click="handleDuckClick(duck, index)">
+            <img src="/img/baby_duck.png"><br>
+            {{ duck }}
       </div>
     </div>
     <h1>Moves: {{ moves }}</h1>
@@ -44,82 +79,99 @@ Number.prototype.mod = function(n) {
     return ((this%n)+n)%n;
 };
 
+var boards = [{
+    ducks: [3,2,1],
+    passing_score: 8,
+    perfect_score: 4
+},{
+    ducks: [5,4,3,2,1],
+    passing_score: 8,
+    perfect_score: 4
+},{
+    ducks: [9,8,7,6,5,4,3,2,1],
+    passing_score: 14,
+    perfect_score: 10
+}];
+
 var v = new Vue({
-  created: function(){
+    created: function(){
     this.reset();
-  },
-  el: '#app',
-  data: {
-    ducks: [],
-    source_index: null,
-    moves: 0,
-    size: 7
-  },
-  computed: {
-    left_target_index: function(){
-        return this.source_index === null ?
-               null :
-               (this.source_index-this.ducks[this.source_index]).mod(this.ducks.length);
     },
-    right_target_index: function(){
-        return this.source_index === null ?
-               null :
-               (this.source_index+this.ducks[this.source_index]).mod(this.ducks.length);
+    el: '#app',
+    data: {
+        ducks: [],
+        source_index: null,
+        moves: 0,
+        size: 7,
+        boards: boards,
+        current_board: 0,
+        high_scores: []
     },
-    in_win_state: function(){
-        for(i in this.ducks){
-            if(i > 0 && this.ducks[i] < this.ducks[i-1]){
-                return false;
+    computed: {
+        left_target_index: function(){
+            return this.source_index === null ?
+                   null :
+                   (this.source_index-this.ducks[this.source_index]).mod(this.ducks.length);
+        },
+        right_target_index: function(){
+            return this.source_index === null ?
+                   null :
+                   (this.source_index+this.ducks[this.source_index]).mod(this.ducks.length);
+        },
+        in_win_state: function(){
+            for(i in this.ducks){
+                if(i > 0 && this.ducks[i] < this.ducks[i-1]){
+                    return false;
+                }
+            }
+            return true;
+        }
+    },
+    methods: {
+        getDuckValue: function(index){
+            return index === null ?
+                   null :
+                   this.ducks[index];
+        },
+        handleBoardClick: function(board, clicked_index){
+            this.current_board = clicked_index;
+            this.reset();
+        },
+        handleDuckClick: function(duck, clicked_index) {
+            // if we've aready won... just ignore
+            if(this.in_win_state){return;}
+            // if we're re-clicking the source... clear it
+            if(this.source_index == clicked_index){
+                this.source_index = null;
+            // else if we're clicking a target... act on that
+            }else if(this.right_target_index == clicked_index || this.left_target_index == clicked_index){
+                var source_value = this.getDuckValue(this.source_index);
+                var target_value = this.getDuckValue(clicked_index);
+                Vue.set(v.ducks, this.source_index, target_value);
+                Vue.set(v.ducks, clicked_index, source_value);
+                this.source_index = null;
+                this.moves++;
+            // otherwise... just set a new source
+            }else{
+                this.source_index = clicked_index;
+            }
+        },
+        reset: function(){
+            this.ducks = this.boards[this.current_board].ducks.slice(0);
+            this.moves = 0;
+            this.source_index = null;
+        },
+        getDuckClass: function(index) {
+            if(this.source_index == index){
+                return "source_index";
+            }else if(this.left_target_index == index){
+                return "target_duck";
+            }else if(this.right_target_index == index){
+                return "target_duck";
             }
         }
-        return true;
     }
-  },
-  methods: {
-    getDuckValue: function(index){
-        return index === null ?
-               null :
-               this.ducks[index];
-    },
-    handleDuckClick: function(duck, clicked_index) {
-        // if we've aready won... just ignore
-        if(this.in_win_state){return;}
-        // if we're re-clicking the source... clear it
-        if(this.source_index == clicked_index){
-            this.source_index = null;
-        // else if we're clicking a target... act on that
-        }else if(this.right_target_index == clicked_index || this.left_target_index == clicked_index){
-            var source_value = this.getDuckValue(this.source_index);
-            var target_value = this.getDuckValue(clicked_index);
-            Vue.set(v.ducks, this.source_index, target_value);
-            Vue.set(v.ducks, clicked_index, source_value);
-            this.source_index = null;
-            this.moves++;
-        // otherwise... just set a new source
-        }else{
-            this.source_index = clicked_index;
-        }
-    },
-    reset: function(){
-        var ducks = [];
-        for(i=this.size; i>=1; i--){
-            ducks.push(i);
-        }
-        this.ducks = ducks;
-        this.moves = 0;
-        this.source_index = null;
-    },
-    getDuckClass: function(clicked_index) {
-        if(this.source_index == clicked_index){
-            return "source_index";
-        }else if(this.left_target_index == clicked_index){
-            return "target_duck";
-        }else if(this.right_target_index == clicked_index){
-            return "target_duck";
-        }
-    }
-  }
-})
+});
 
 </script>
     
