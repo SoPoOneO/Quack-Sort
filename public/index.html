@@ -58,7 +58,7 @@
             Level {{ (index+1) }}<br>
             {{ level.locked ? 'LOCKED' : 'not locked' }}<br>
             Best Score: {{ level.best_score }}<br>
-            {{ getlevelBested(level) ? 'perfect' : '&nbsp;' }}
+            {{ getlevelBested(level) ? 'perfected' : '&nbsp;' }}
       </div>
     </div>
     <div id="ducks">
@@ -72,7 +72,7 @@
     </div>
     <h1>Moves: {{ current_level.current_score }}</h1>
     <button type="button" @click="reset()">Reset</button>
-    <h1 v-if="in_win">You Win!</h1>
+    <div v-html="message"></div>
 </div>
 <script>
 
@@ -112,6 +112,7 @@ var v = new Vue({
     },
     el: '#app',
     data: {
+        message: "",
         levels: levels,
         source_index: null,
         current_level_index: 0,
@@ -154,10 +155,13 @@ var v = new Vue({
         },
         handlelevelClick: function(level, clicked_index){
             if(level.locked){return;}
-            this.source_index = null;
             this.current_level_index = clicked_index;
             if(this.current_level.current === null){
                 this.current_level.current = this.current_level.starting.slice(0);
+                this.message = "";
+            }
+            if(this.in_win){
+                this.reset();
             }
         },
         handleDuckClick: function(duck, clicked_index) {
@@ -178,17 +182,33 @@ var v = new Vue({
 
                 // if we won
                 if(this.in_win){
+
+                    this.message = "YOU WIN<br>";
+
                     // if the current best score is null
                     if(this.current_level.best_score === null ||
                         this.current_level.current_score < this.current_level.best_score){
                         this.current_level.best_score = this.current_level.current_score;
                     }
-                    // if their score is good enough to unlock the next level
-                    if(this.current_level.current_score <= this.current_level.passing_score){
-                        if(this.current_level_index < this.levels.length){
-                            this.levels[this.current_level_index+1].locked = false;
+
+                    if(this.current_level.current_score <= this.current_level.perfect_score){
+                        this.message += "Perfect Score<br>";
+                    }
+
+                    // if there is a next level
+                    if(this.current_level_index < this.levels.length){
+                        var next_level = this.levels[this.current_level_index+1];
+                        if(next_level.locked){
+                            // if their score is good enough to unlock the next level
+                            if(this.current_level.current_score <= this.current_level.passing_score){
+                                this.message += "That's good enough to unlock the next level!<br>";
+                                next_level.locked = false;
+                            }else{
+                                this.message += "But you need a score of "+current_level.passing_score+" or less to unlock the next level<br>";
+                            }
                         }
                     }
+
                 }
             // otherwise... just set a new source
             }else{
@@ -199,6 +219,7 @@ var v = new Vue({
             this.current_level.current = this.current_level.starting.slice(0);
             this.current_level.current_score = 0;
             this.source_index = null;
+            this.message = "";
         },
         getDuckClass: function(index) {
             if(this.source_index == index){
