@@ -57,8 +57,8 @@
            @click="handlelevelClick(level, index)">
             Level {{ (index+1) }}<br>
             {{ getlevelLocked(index) ? 'LOCKED' : 'not locked' }}<br>
-            Best Score: {{ level.best_score }}
-            {{ getlevelBested(level) ? 'perfect' : '' }}
+            Best Score: {{ level.best_score }}<br>
+            {{ getlevelBested(level) ? 'perfect' : '&nbsp;' }}
       </div>
     </div>
     <div id="ducks">
@@ -90,8 +90,8 @@ var levels = [{
 },{
     starting: [5,4,3,2,1],
     current: null,
-    passing_score: 8,
-    perfect_score: 4,
+    passing_score: 4,
+    perfect_score: 2,
     best_score: null,
     current_score: 0
 },{
@@ -146,7 +146,8 @@ var v = new Vue({
             return previous_level.best_score < previous_level.passing_score;
         },
         getlevelBested: function(level){
-            return level.best_score >= level.perfect_score;
+            return level.best_score !== null &&
+                   level.best_score <= level.perfect_score;
         },
         getDuckValue: function(index){
             return index === null ?
@@ -180,12 +181,9 @@ var v = new Vue({
                 if(this.in_win){
                 // if the current best score is null
                     if(this.current_level.best_score === null ||
-                        this.moves < this.current_level.best_score){
-                        this.current_level.best_score = moves;
+                        this.current_level.current_score < this.current_level.best_score){
+                        this.current_level.best_score = this.current_level.current_score;
                     }
-
-                // else if our score is better than the current best
-
                 }
             // otherwise... just set a new source
             }else{
