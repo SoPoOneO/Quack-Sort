@@ -27,20 +27,20 @@
     background-color: orange;
 }
 
-#boards {
+#levels {
     margin-bottom: 40px;
 }
 
-.board {
+.level {
     border: 1px solid grey;
-    width: 45px;
-    height: 45px;
+    width: 100px;
+    height: 100px;
     margin: 8px;
     display: inline-block;
     text-align: center;
 }
 
-.current_board {
+.current_level_index {
     background-color: #CCC;
 }
 </style>
@@ -50,28 +50,29 @@
 </head>
 <body>
 <div id="app">
-    <div id="boards">
-      <div class="board"
-           v-bind:class="{ current_board: index==current_board }"
-           v-for="(board, index) in boards" 
-           @click="handleBoardClick(board, index)">
-            Level <br>
-            {{ (index+1) }}
+    <div id="levels">
+      <div class="level"
+           v-bind:class="{ current_level_index: index==current_level_index }"
+           v-for="(level, index) in levels" 
+           @click="handlelevelClick(level, index)">
+            Level {{ (index+1) }}<br>
+            {{ getlevelLocked(index) ? 'LOCKED' : 'not locked' }}<br>
+            Best Score: {{ level.best_score }}
+            {{ getlevelBested(level) ? 'perfect' : '' }}
       </div>
     </div>
     <div id="ducks">
       <div class="duck" 
            :class="getDuckClass(index)" 
-           v-for="(duck, index) in ducks" 
+           v-for="(duck, index) in current_level.current" 
            @click="handleDuckClick(duck, index)">
             <img src="/img/baby_duck.png"><br>
             {{ duck }}
       </div>
     </div>
-    <h1>Moves: {{ moves }}</h1>
-    Size: <input type="number" min="2" id="size" v-model.number="size">
+    <h1>Moves: {{ current_level.current_score }}</h1>
     <button type="button" @click="reset()">Reset</button>
-    <h1 v-if="in_win_state">You Win!</h1>
+    <h1 v-if="in_win">You Win!</h1>
 </div>
 <script>
 
@@ -79,48 +80,59 @@ Number.prototype.mod = function(n) {
     return ((this%n)+n)%n;
 };
 
-var boards = [{
-    ducks: [3,2,1],
+var levels = [{
+    starting: [3,2,1],
+    current: null,
     passing_score: 8,
-    perfect_score: 4
+    perfect_score: 4,
+    best_score: null,
+    current_score: 0
 },{
-    ducks: [5,4,3,2,1],
+    starting: [5,4,3,2,1],
+    current: null,
     passing_score: 8,
-    perfect_score: 4
+    perfect_score: 4,
+    best_score: null,
+    current_score: 0
 },{
-    ducks: [9,8,7,6,5,4,3,2,1],
+    starting: [9,8,7,6,5,4,3,2,1],
+    current: null,
     passing_score: 14,
-    perfect_score: 10
+    perfect_score: 10,
+    best_score: null,
+    current_score: 0
 }];
 
 var v = new Vue({
     created: function(){
-    this.reset();
+        this.reset();
     },
     el: '#app',
     data: {
-        ducks: [],
+        levels: levels,
         source_index: null,
-        moves: 0,
-        size: 7,
-        boards: boards,
-        current_board: 0,
-        high_scores: []
+        current_level_index: 0,
     },
     computed: {
+        current_level: function(){
+            return this.levels[this.current_level_index];
+        },
         left_target_index: function(){
+            var current = this.current_level.current;
             return this.source_index === null ?
                    null :
-                   (this.source_index-this.ducks[this.source_index]).mod(this.ducks.length);
+                   (this.source_index - current[this.source_index]).mod(current.length);
         },
         right_target_index: function(){
+            var current = this.current_level.current;
             return this.source_index === null ?
                    null :
-                   (this.source_index+this.ducks[this.source_index]).mod(this.ducks.length);
+                   (this.source_index + current[this.source_index]).mod(current.length);
         },
-        in_win_state: function(){
-            for(i in this.ducks){
-                if(i > 0 && this.ducks[i] < this.ducks[i-1]){
+        in_win: function(){
+            var current = this.current_level.current;
+            for(i in current){
+                if(i > 0 && current[i] < current[i-1]){
                     return false;
                 }
             }
@@ -128,18 +140,30 @@ var v = new Vue({
         }
     },
     methods: {
+        getlevelLocked: function(level_index){
+            if(level_index===0){return false;}
+            var previous_level = this.levels[level_index-1];
+            return previous_level.best_score < previous_level.passing_score;
+        },
+        getlevelBested: function(level){
+            return level.best_score >= level.perfect_score;
+        },
         getDuckValue: function(index){
             return index === null ?
                    null :
-                   this.ducks[index];
+                   this.current_level.current[index];
         },
-        handleBoardClick: function(board, clicked_index){
-            this.current_board = clicked_index;
-            this.reset();
+        handlelevelClick: function(level, clicked_index){
+            this.source_index = null;
+            this.current_level_index = clicked_index;
+            if(this.current_level.current === null){
+                this.current_level.current = this.current_level.starting.slice(0);
+            }
         },
         handleDuckClick: function(duck, clicked_index) {
+            var current = this.current_level.current;
             // if we've aready won... just ignore
-            if(this.in_win_state){return;}
+            if(this.in_win){return;}
             // if we're re-clicking the source... clear it
             if(this.source_index == clicked_index){
                 this.source_index = null;
@@ -147,18 +171,30 @@ var v = new Vue({
             }else if(this.right_target_index == clicked_index || this.left_target_index == clicked_index){
                 var source_value = this.getDuckValue(this.source_index);
                 var target_value = this.getDuckValue(clicked_index);
-                Vue.set(v.ducks, this.source_index, target_value);
-                Vue.set(v.ducks, clicked_index, source_value);
+                Vue.set(current, this.source_index, target_value);
+                Vue.set(current, clicked_index, source_value);
                 this.source_index = null;
-                this.moves++;
+                this.current_level.current_score++;
+
+                // if we won
+                if(this.in_win){
+                // if the current best score is null
+                    if(this.current_level.best_score === null ||
+                        this.moves < this.current_level.best_score){
+                        this.current_level.best_score = moves;
+                    }
+
+                // else if our score is better than the current best
+
+                }
             // otherwise... just set a new source
             }else{
                 this.source_index = clicked_index;
             }
         },
         reset: function(){
-            this.ducks = this.boards[this.current_board].ducks.slice(0);
-            this.moves = 0;
+            this.current_level.current = this.current_level.starting.slice(0);
+            this.current_level.current_score = 0;
             this.source_index = null;
         },
         getDuckClass: function(index) {
