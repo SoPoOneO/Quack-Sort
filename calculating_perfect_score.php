@@ -25,6 +25,15 @@
         $this->ducks = $ducks;
     }
 
+    function getWinId(){
+        $ducks = $this->ducks;
+        return json_encode(sort($ducks));
+    }
+
+    function isWin(){
+        return $this->getId() === $this->getWinId();
+    }
+
     function getId(){
         return json_encode($this->ducks);
     }
@@ -39,26 +48,41 @@
         return $moves;
     }
 
-}
+    function getVariants(){
+        $variants = [];
+        $ducks = $this->ducks;
+        $d0 = $ducks[0];
+        $d1 = $ducks[1];
+        $d2 = $ducks[2];
+        $variants = [
+            new Node([$d0, $d2, $d1], $this),
+            new Node([$d1, $d2, $d0], $this),
+            new Node([$d2, $d0, $d1], $this)
+        ];
+        return $variants;
 
-$root = new Node([3,2,1]);
-$second = new Node([3,1,2], $root);
-$third = new Node([1,3,2], $second);
-
-function solve($node, $nodes=[]){
-    // if we've never gotten to this node, add it on
-    if(!is_set($nodes[$node->getId()])){
-        $nodes.push($node);
-    // if we HAVE gotten to it before
-    }else{
-        $old_version = $nodes[$node->getId()];
-        // add it on only if we got here faster this time
-        if($node->getMoves() < $old_version){
-            $nodes[$node->getId()] = $node;
-        }
     }
 
 }
 
-print_r($third);
-print_r($third->getMoves());
+function solve($node, $nodes=[], $best_win=null){
+    // if we've gotten here before AND in fewer or equal moves...
+    if(isset($nodes[$node->getId()]) &&
+       $nodes[$node->getId()]->getMoves() <= $node->getMoves()){
+        // ... bail
+        return [];
+    }
+
+    // otherwise we're safe... so add it to this list
+    $nodes[$node->getId()] = $node;
+
+    if(!$node->isWin()){
+
+        // and move on with every possible move
+        foreach($node->getVariants() as $new_node){
+            $nodes = array_merge($nodes, solve($new_node, $nodes));
+        }
+    }
+
+    return $nodes;
+}
