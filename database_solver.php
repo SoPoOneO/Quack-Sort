@@ -1,5 +1,14 @@
 <?php
 
+require './vendor/autoload.php';
+require './Capsule.php';
+
+use Illuminate\Database\Capsule\Manager as Capsule;
+
+$users = Capsule::table('boards')->get();
+
+print_r($users->toArray());
+
 // TABLE: bards
 //  sequence,
 //  min_moves,

@@ -1,0 +1,12 @@
+{
+    "name": "root/quack-sort",
+    "authors": [
+        {
+            "name": "John Bussey",
+            "email": "jbussey365@yahoo.com"
+        }
+    ],
+    "require": {
+        "illuminate/database": "^5.6"
+    }
+}
