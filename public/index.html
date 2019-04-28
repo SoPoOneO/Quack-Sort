@@ -46,13 +46,15 @@
 </head>
 <body>
 <div id="app">
+    <h1>Sort the ducks smallest to largest</h1>
+    <p>Pieces can swap with ones a number away equal to their number</p>
     <div id="levels">
       <div class="level"
            v-bind:class="{ current_level_index: index==current_level_index }"
            v-for="(level, index) in levels" 
            @click="handlelevelClick(level, index)">
             Level {{ (index+1) }}<br>
-            {{ level.locked ? 'LOCKED' : 'not locked' }}<br>
+            {{ level.locked ? 'LOCKED' : 'Unlocked' }}<br>
             Best Score: {{ level.best_score }}<br>
             {{ getlevelBested(level) ? 'perfected' : '&nbsp;' }}
       </div>
